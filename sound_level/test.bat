@@ -1,0 +1,1 @@
+C:\ffmpeg\bin>ffprobe  -f lavfi amovie=test.wav,ebur128=metadata=1:peak=true -show_frames -show_format -print_format json >out.json
