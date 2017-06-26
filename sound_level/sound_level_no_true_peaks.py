@@ -47,8 +47,8 @@ for subdir, dirs, files in os.walk(rootdir):
         #inputFilePath="../IN/test.wav"
         # tmpFilePath=OUT_DIR+"/tmp.mkv"
         tmpFilePath=OUT_DIR+"/tmp.mp4"
-        ffprobeLavfiStr="amovie={},ebur128=metadata=1:peak=true".format(inputFilePath.replace("\\",r"/").replace(":",r"\\:"))
-        ffprobeLavfiStrTmp="amovie={},ebur128=metadata=1:peak=true".format(tmpFilePath.replace("\\",r"/").replace(":",r"\\:"))
+        ffprobeLavfiStr="amovie={},ebur128=metadata=1".format(inputFilePath.replace("\\",r"/").replace(":",r"\\:"))
+        ffprobeLavfiStrTmp="amovie={},ebur128=metadata=1".format(tmpFilePath.replace("\\",r"/").replace(":",r"\\:"))
         ffmpegFilterStr="ebur128=metadata=1:peak=true"
         # process = subprocess.Popen(["{}ffprobe".format(FFMPEG_DIR),"-hide_banner", "-loglevel", "error",inputFilePath+"rrr" ,"-show_format", "-print_format", "json"], stdout=subprocess.PIPE)
         process = subprocess.Popen(["{}ffprobe".format(FFMPEG_DIR),"-hide_banner", "-loglevel", "error",inputFilePath,"-show_format", "-print_format", "json"], stdout=subprocess.PIPE,stderr=subprocess.PIPE)
@@ -73,9 +73,9 @@ for subdir, dirs, files in os.walk(rootdir):
                 lavfi_r128_LRA_total = float(frame["tags"]["lavfi.r128.LRA"])
                 lavfi_r128_LRA_low_total = float(frame["tags"]["lavfi.r128.LRA.low"])
                 lavfi_r128_LRA_high_total = float(frame["tags"]["lavfi.r128.LRA.high"])
-                lavfi_r128_true_peaks_ch0_total = float(frame["tags"]["lavfi.r128.true_peaks_ch0"])
-                lavfi_r128_true_peaks_ch1_total = float(frame["tags"]["lavfi.r128.true_peaks_ch1"])
-                total.append([lavfi_r128_I_total,lavfi_r128_LRA_total,lavfi_r128_LRA_low_total,lavfi_r128_LRA_high_total,lavfi_r128_true_peaks_ch0_total,lavfi_r128_true_peaks_ch1_total,
+                #lavfi_r128_true_peaks_ch0_total = float(frame["tags"]["lavfi.r128.true_peaks_ch0"])
+                #lavfi_r128_true_peaks_ch1_total = float(frame["tags"]["lavfi.r128.true_peaks_ch1"])
+                total.append([lavfi_r128_I_total,lavfi_r128_LRA_total,lavfi_r128_LRA_low_total,lavfi_r128_LRA_high_total,
                               totalDuration,inputFilePath])
                 break
         t_start = 0
@@ -112,9 +112,9 @@ for subdir, dirs, files in os.walk(rootdir):
                     lavfi_r128_LRA = float(frame["tags"]["lavfi.r128.LRA"])
                     lavfi_r128_LRA_low = float(frame["tags"]["lavfi.r128.LRA.low"])
                     lavfi_r128_LRA_high = float(frame["tags"]["lavfi.r128.LRA.high"])
-                    lavfi_r128_true_peaks_ch0 = float(frame["tags"]["lavfi.r128.true_peaks_ch0"])
-                    lavfi_r128_true_peaks_ch1 = float(frame["tags"]["lavfi.r128.true_peaks_ch1"])
-                    shortFrames.append([lavfi_r128_I,lavfi_r128_LRA,lavfi_r128_LRA_low,lavfi_r128_LRA_high,lavfi_r128_true_peaks_ch0,lavfi_r128_true_peaks_ch1,
+                    # lavfi_r128_true_peaks_ch0 = float(frame["tags"]["lavfi.r128.true_peaks_ch0"])
+                    # lavfi_r128_true_peaks_ch1 = float(frame["tags"]["lavfi.r128.true_peaks_ch1"])
+                    shortFrames.append([lavfi_r128_I,lavfi_r128_LRA,lavfi_r128_LRA_low,lavfi_r128_LRA_high,
                                         t_start,t_finish,count,inputFilePath])
                     break
             t_start = t_finish
