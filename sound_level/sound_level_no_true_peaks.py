@@ -32,7 +32,8 @@ logger.addHandler(stream_handler)
 shortFrames = []
 total=[]
 # rootdir = "D:\Полезное видео\GIT"
-rootdir = "H:\Полезное видео\Распознавание речи"
+# rootdir = "H:\Полезное видео\Распознавание речи"
+rootdir = "D:\Полезное видео\Распознавание речи\cs224n 2017"
 for subdir, dirs, files in os.walk(rootdir):
     for file in files:
         filename, file_extension = os.path.splitext(file)

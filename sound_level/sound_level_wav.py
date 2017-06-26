@@ -49,9 +49,20 @@ for subdir, dirs, files in os.walk(rootdir):
         #inputFilePath="../IN/test.wav"
         # tmpFilePath=OUT_DIR+"/tmp.mkv"
         tmpFilePath=OUT_DIR+"/tmp.mp4"
+        # tmpFilePath=OUT_DIR+"/tmp.wav"
+        wavFilePath=OUT_DIR+"/inp.mp4"
         ffprobeLavfiStr="amovie={},ebur128=metadata=1:peak=true".format(inputFilePath.replace("\\",r"/").replace(":",r"\\:"))
         ffprobeLavfiStrTmp="amovie={},ebur128=metadata=1:peak=true".format(tmpFilePath.replace("\\",r"/").replace(":",r"\\:"))
         ffmpegFilterStr="ebur128=metadata=1:peak=true"
+
+        # process = subprocess.Popen(["{}ffmpeg".format(FFMPEG_DIR),"-hide_banner", "-loglevel", "error","-y","-i",inputFilePath,"-vn", "-c","copy",tmpFilePath], stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        process = subprocess.Popen(["{}ffmpeg".format(FFMPEG_DIR),"-hide_banner", "-loglevel", "error","-y","-i",inputFilePath,"-vn", "-c","copy",wavFilePath], stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        process.wait()
+        stdout = process.communicate()[0]
+        stderr = process.communicate()[1]
+        if len(stderr) != 0:
+            logger.error(stderr.decode())
+        inputFilePath = wavFilePath
         # process = subprocess.Popen(["{}ffprobe".format(FFMPEG_DIR),"-hide_banner", "-loglevel", "error",inputFilePath+"rrr" ,"-show_format", "-print_format", "json"], stdout=subprocess.PIPE)
         process = subprocess.Popen(["{}ffprobe".format(FFMPEG_DIR),"-hide_banner", "-loglevel", "error",inputFilePath,"-show_format", "-print_format", "json"], stdout=subprocess.PIPE,stderr=subprocess.PIPE)
         stdout = process.communicate()[0]
@@ -69,6 +80,7 @@ for subdir, dirs, files in os.walk(rootdir):
             logger.error(stderr.decode())
         # print ('STDOUT:{}'.format(stdout))
         parsed =  json.loads(stdout)
+        process.wait()
         for frame in reversed(parsed["frames"]):
             if "tags" in frame:
                 lavfi_r128_I_total = float(frame["tags"]["lavfi.r128.I"])
@@ -90,7 +102,7 @@ for subdir, dirs, files in os.walk(rootdir):
             #process = subprocess.Popen(["{}ffmpeg".format(FFMPEG_DIR),"-hide_banner", "-loglevel", "error","-y","-i",inputFilePath,"-vn", "-ss",str(t_start),"-t",str(SHORT_FRAME_DURATION),"-c","copy",tmpFilePath], stdout=subprocess.PIPE,stderr=subprocess.PIPE)
             #process = subprocess.Popen(["{}ffmpeg".format(FFMPEG_DIR),"-hide_banner", "-loglevel", "error","-y","-i",inputFilePath, "-ss",str(t_start),"-t",str(SHORT_FRAME_DURATION),"-c","copy",tmpFilePath], stdout=subprocess.PIPE,stderr=subprocess.PIPE)
             #process = subprocess.Popen(["{}ffmpeg".format(FFMPEG_DIR),"-hide_banner", "-loglevel", "error","-y","-ss",str(t_start),"-i",inputFilePath,"-vn", "-t",str(SHORT_FRAME_DURATION),"-c","copy",tmpFilePath], stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-            process = subprocess.Popen(["{}ffmpeg".format(FFMPEG_DIR),"-hide_banner", "-loglevel", "error","-y","-ss",str(t_start),"-i",inputFilePath,"-vn", "-t",str(SHORT_FRAME_DURATION),"-c","copy",tmpFilePath], stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+            process = subprocess.Popen(["{}ffmpeg".format(FFMPEG_DIR),"-hide_banner", "-loglevel", "error","-y","-ss",str(t_start),"-i",inputFilePath, "-t",str(SHORT_FRAME_DURATION),"-c","copy",tmpFilePath], stdout=subprocess.PIPE,stderr=subprocess.PIPE)
             process.wait()
             ffmpegTime += time.clock() - t_
             stdout = process.communicate()[0]
