@@ -50,6 +50,7 @@ stream_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 logger.addHandler(stream_handler)
 
+logger.info('START with option CALC_SHORT_FRAMES={}'.format(CALC_SHORT_FRAMES))
 
 shortFrames = []
 total=[]
@@ -79,6 +80,7 @@ totalNumberOfFiles = 0
 fileCount = 0
 totalCalcTime =0
 sizeOfProcessedFiles=0
+durationOfProcessedFiles=0
 
 with open (FILE_LIST, 'r') as fileList:
     fileListReader = csv.DictReader(fileList, dialect=dialect)
@@ -97,6 +99,7 @@ with open (FILE_LIST, 'r') as fileList:
         path = row["path"]
         inputFilePath = os.path.join(rootdir, path)
         sizeOfProcessedFiles += file_size
+        durationOfProcessedFiles += duration
 # for subdir, dirs, files in os.walk(rootdir):
 #     for file in files:
 #         filename, file_extension = os.path.splitext(file)
@@ -213,7 +216,8 @@ with open (FILE_LIST, 'r') as fileList:
             calcTime = per_file_t_finish - per_file_t_start
             per_file_t_start = time.clock()
             # print("per_file_t_finish={} per_file_t_start={}".format(per_file_t_finish, per_file_t_start))
-            remainTime = totalCalcTime*(totalFileSizeOfList/sizeOfProcessedFiles -1)
+            # remainTime = totalCalcTime*(totalFileSizeOfList/sizeOfProcessedFiles -1)
+            remainTime = totalCalcTime*(totalDurationOfList/durationOfProcessedFiles -1)
             logger.info('calc. time {:.1f}min\ttotal calc. time {:.1f}min\tremain {:.1f}min'.format(calcTime/60,totalCalcTime/60,remainTime/60))
             shortFrameLevelCSV.add_rows(shortFrames)
         except:
