@@ -1,5 +1,6 @@
-rem @echo off
+@echo off
 setlocal enabledelayedexpansion
+goto mgs
 if exist dirs.txt  del dirs.txt
 for /f "tokens=*" %%G in ('dir /b /ad "\\MGS-HNAS-FS-01.mgs.ru\SAVFSZ_R\p*"') do (
 	for /f "tokens=*" %%F in ('dir /b /ad "\\MGS-HNAS-FS-01.mgs.ru\SAVFSZ_R\%%G\group*"') do (
@@ -19,8 +20,8 @@ for /f "tokens=*" %%G in ('dir /b /ad "\\MGS-HNAS-FS-01.mgs.ru\SAVFSZ_R\p*"') do
 			)
     )
 )
-
-for /f "tokens=*" %%G in ('dir /b /ad "\\MGS-HNAS-FS-01.mgs.ru\SAVFSZ_R\mgs"') do (
+:mgs
+for /f "tokens=*" %%G in ('dir /b /ad "\\MGS-HNAS-FS-01.mgs.ru\SAVFSZ_R\MGS*"') do (
 	for /f "tokens=*" %%F in ('dir /b /ad "\\MGS-HNAS-FS-01.mgs.ru\SAVFSZ_R\%%G\group*"') do (
 			REM for /f "skip=5 tokens=1,2,4 delims= " %%A in ('dir /ad \\MGS-HNAS-FS-01.mgs.ru\SAVFSZ_R\%%G\%%F\recording*') do  (
 			for /f "tokens=*" %%H in ('dir /b /ad \\MGS-HNAS-FS-01.mgs.ru\SAVFSZ_R\%%G\%%F\recording*') do  (
