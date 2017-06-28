@@ -34,7 +34,8 @@ total=[]
 # rootdir = "D:\Полезное видео\GIT"
 # rootdir = "H:\Полезное видео\Распознавание речи"
 # rootdir = "D:\Полезное видео\Распознавание речи\cs224n 2017"
-rootdir = "\\\\ANDROID_6F6C\share\sda\sda1\cs224n 2017"
+# rootdir = "\\\\ANDROID_6F6C\share\sda\sda1\cs224n 2017"
+rootdir = "L:\MGS-HNAS-FS-01.mgs.ru"
 for subdir, dirs, files in os.walk(rootdir):
     for file in files:
         filename, file_extension = os.path.splitext(file)
@@ -54,96 +55,107 @@ for subdir, dirs, files in os.walk(rootdir):
         ffprobeLavfiStr="amovie={},ebur128=metadata=1:peak=true".format(inputFilePath.replace("\\",r"/").replace(":",r"\\:"))
         ffprobeLavfiStrTmp="amovie={},ebur128=metadata=1:peak=true".format(tmpFilePath.replace("\\",r"/").replace(":",r"\\:"))
         ffmpegFilterStr="ebur128=metadata=1:peak=true"
-
-        # process = subprocess.Popen(["{}ffmpeg".format(FFMPEG_DIR),"-hide_banner", "-loglevel", "error","-y","-i",inputFilePath,"-vn", "-c","copy",tmpFilePath], stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-        process = subprocess.Popen(["{}ffmpeg".format(FFMPEG_DIR),"-hide_banner", "-loglevel", "error","-y","-i",inputFilePath,"-vn", "-c","copy",wavFilePath], stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-        process.wait()
-        stdout = process.communicate()[0]
-        stderr = process.communicate()[1]
-        if len(stderr) != 0:
-            logger.error(stderr.decode())
-        inputFilePath = wavFilePath
-        # process = subprocess.Popen(["{}ffprobe".format(FFMPEG_DIR),"-hide_banner", "-loglevel", "error",inputFilePath+"rrr" ,"-show_format", "-print_format", "json"], stdout=subprocess.PIPE)
-        process = subprocess.Popen(["{}ffprobe".format(FFMPEG_DIR),"-hide_banner", "-loglevel", "error",inputFilePath,"-show_format", "-print_format", "json"], stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-        stdout = process.communicate()[0]
-        stderr = process.communicate()[1]
-        # print ('STDOUT:{}'.format(stdout))
-        # print ('STDOUT:{} \n STDERR:{}'.format(stdout,stderr))
-        if len(stderr) != 0:
-            logger.error(stderr.decode())
-        parsed =  json.loads(stdout)
-        totalDuration=float(parsed["format"]["duration"])
-        process = subprocess.Popen(["{}ffprobe".format(FFMPEG_DIR),"-hide_banner", "-loglevel", "error", "-f", "lavfi","-i", ffprobeLavfiStr, "-show_frames","-show_format", "-print_format", "json"], stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-        stdout = process.communicate()[0]
-        stderr = process.communicate()[1]
-        if len(stderr) != 0:
-            logger.error(stderr.decode())
-        # print ('STDOUT:{}'.format(stdout))
-        parsed =  json.loads(stdout)
-        process.wait()
-        for frame in reversed(parsed["frames"]):
-            if "tags" in frame:
-                lavfi_r128_I_total = float(frame["tags"]["lavfi.r128.I"])
-                lavfi_r128_LRA_total = float(frame["tags"]["lavfi.r128.LRA"])
-                lavfi_r128_LRA_low_total = float(frame["tags"]["lavfi.r128.LRA.low"])
-                lavfi_r128_LRA_high_total = float(frame["tags"]["lavfi.r128.LRA.high"])
-                lavfi_r128_true_peaks_ch0_total = float(frame["tags"]["lavfi.r128.true_peaks_ch0"])
-                lavfi_r128_true_peaks_ch1_total = float(frame["tags"]["lavfi.r128.true_peaks_ch1"])
-                total.append([lavfi_r128_I_total,lavfi_r128_LRA_total,lavfi_r128_LRA_low_total,lavfi_r128_LRA_high_total,lavfi_r128_true_peaks_ch0_total,lavfi_r128_true_peaks_ch1_total,
-                              totalDuration,inputFilePath])
-                break
-        t_start = 0
-        t_finish = t_start +  SHORT_FRAME_DURATION
-        count = 0
-        ffmpegTime=0
-        ffprobeTime=0
-        while  t_finish <= totalDuration:
-            t_ = time.clock()
-            #process = subprocess.Popen(["{}ffmpeg".format(FFMPEG_DIR),"-hide_banner", "-loglevel", "error","-y","-i",inputFilePath,"-vn", "-ss",str(t_start),"-t",str(SHORT_FRAME_DURATION),"-c","copy",tmpFilePath], stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-            #process = subprocess.Popen(["{}ffmpeg".format(FFMPEG_DIR),"-hide_banner", "-loglevel", "error","-y","-i",inputFilePath, "-ss",str(t_start),"-t",str(SHORT_FRAME_DURATION),"-c","copy",tmpFilePath], stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-            #process = subprocess.Popen(["{}ffmpeg".format(FFMPEG_DIR),"-hide_banner", "-loglevel", "error","-y","-ss",str(t_start),"-i",inputFilePath,"-vn", "-t",str(SHORT_FRAME_DURATION),"-c","copy",tmpFilePath], stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-            process = subprocess.Popen(["{}ffmpeg".format(FFMPEG_DIR),"-hide_banner", "-loglevel", "error","-y","-ss",str(t_start),"-i",inputFilePath, "-t",str(SHORT_FRAME_DURATION),"-c","copy",tmpFilePath], stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        try:
+            # process = subprocess.Popen(["{}ffmpeg".format(FFMPEG_DIR),"-hide_banner", "-loglevel", "error","-y","-i",inputFilePath,"-vn", "-c","copy",tmpFilePath], stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+            process = subprocess.Popen(["{}ffmpeg".format(FFMPEG_DIR),"-hide_banner", "-loglevel", "error","-y","-i",inputFilePath,"-vn", "-c","copy",wavFilePath], stdout=subprocess.PIPE,stderr=subprocess.PIPE)
             process.wait()
-            ffmpegTime += time.clock() - t_
             stdout = process.communicate()[0]
             stderr = process.communicate()[1]
             if len(stderr) != 0:
                 logger.error(stderr.decode())
-            # print("ffmpeg:{}".format(process.wait()))
-            t_ = time.clock()
-            process = subprocess.Popen(["{}ffprobe".format(FFMPEG_DIR),"-hide_banner", "-loglevel", "error", "-f", "lavfi","-i", ffprobeLavfiStrTmp,"-show_frames", "-show_format", "-print_format", "json"], stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+            inputFilePath = wavFilePath
+            # process = subprocess.Popen(["{}ffprobe".format(FFMPEG_DIR),"-hide_banner", "-loglevel", "error",inputFilePath+"rrr" ,"-show_format", "-print_format", "json"], stdout=subprocess.PIPE)
+            process = subprocess.Popen(["{}ffprobe".format(FFMPEG_DIR),"-hide_banner", "-loglevel", "error",inputFilePath,"-show_format", "-print_format", "json"], stdout=subprocess.PIPE,stderr=subprocess.PIPE)
             stdout = process.communicate()[0]
             stderr = process.communicate()[1]
+            # print ('STDOUT:{}'.format(stdout))
+            # print ('STDOUT:{} \n STDERR:{}'.format(stdout,stderr))
             if len(stderr) != 0:
                 logger.error(stderr.decode())
             parsed =  json.loads(stdout)
+            totalDuration=float(parsed["format"]["duration"])
+            process = subprocess.Popen(["{}ffprobe".format(FFMPEG_DIR),"-hide_banner", "-loglevel", "error", "-f", "lavfi","-i", ffprobeLavfiStr, "-show_frames","-show_format", "-print_format", "json"], stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+            stdout = process.communicate()[0]
+            stderr = process.communicate()[1]
+            if len(stderr) != 0:
+                logger.error(stderr.decode())
+            # print ('STDOUT:{}'.format(stdout))
+            parsed =  json.loads(stdout)
             process.wait()
-            ffprobeTime += time.clock() - t_
-            # print("ffprobe:{}".format(process.wait()))
             for frame in reversed(parsed["frames"]):
                 if "tags" in frame:
-                    lavfi_r128_I = float(frame["tags"]["lavfi.r128.I"])
-                    lavfi_r128_LRA = float(frame["tags"]["lavfi.r128.LRA"])
-                    lavfi_r128_LRA_low = float(frame["tags"]["lavfi.r128.LRA.low"])
-                    lavfi_r128_LRA_high = float(frame["tags"]["lavfi.r128.LRA.high"])
-                    lavfi_r128_true_peaks_ch0 = float(frame["tags"]["lavfi.r128.true_peaks_ch0"])
-                    lavfi_r128_true_peaks_ch1 = float(frame["tags"]["lavfi.r128.true_peaks_ch1"])
-                    shortFrames.append([lavfi_r128_I,lavfi_r128_LRA,lavfi_r128_LRA_low,lavfi_r128_LRA_high,lavfi_r128_true_peaks_ch0,lavfi_r128_true_peaks_ch1,
-                                        t_start,t_finish,count,inputFilePath])
+                    lavfi_r128_I_total = float(frame["tags"]["lavfi.r128.I"])
+                    lavfi_r128_LRA_total = float(frame["tags"]["lavfi.r128.LRA"])
+                    lavfi_r128_LRA_low_total = float(frame["tags"]["lavfi.r128.LRA.low"])
+                    lavfi_r128_LRA_high_total = float(frame["tags"]["lavfi.r128.LRA.high"])
+                    lavfi_r128_true_peaks_ch0_total = float(frame["tags"]["lavfi.r128.true_peaks_ch0"])
+                    # lavfi_r128_true_peaks_ch1_total = float(frame["tags"]["lavfi.r128.true_peaks_ch1"])
+                    # total.append([lavfi_r128_I_total,lavfi_r128_LRA_total,lavfi_r128_LRA_low_total,lavfi_r128_LRA_high_total,lavfi_r128_true_peaks_ch0_total,lavfi_r128_true_peaks_ch1_total,
+                    #               totalDuration,inputFilePath])
+                    total.append([lavfi_r128_I_total,lavfi_r128_LRA_total,lavfi_r128_LRA_low_total,lavfi_r128_LRA_high_total,lavfi_r128_true_peaks_ch0_total,
+                                  totalDuration,inputFilePath])
                     break
-            t_start = t_finish
+            t_start = 0
             t_finish = t_start +  SHORT_FRAME_DURATION
-            count+=1
-            # print(count,t_start , t_finish)
-        logger.info('ffmpeg/ffprobe execution time : {}'.format(ffmpegTime/ffprobeTime))
+            count = 0
+            ffmpegTime=0
+            ffprobeTime=0
+            while  t_finish <= totalDuration:
+                t_ = time.clock()
+                #process = subprocess.Popen(["{}ffmpeg".format(FFMPEG_DIR),"-hide_banner", "-loglevel", "error","-y","-i",inputFilePath,"-vn", "-ss",str(t_start),"-t",str(SHORT_FRAME_DURATION),"-c","copy",tmpFilePath], stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+                #process = subprocess.Popen(["{}ffmpeg".format(FFMPEG_DIR),"-hide_banner", "-loglevel", "error","-y","-i",inputFilePath, "-ss",str(t_start),"-t",str(SHORT_FRAME_DURATION),"-c","copy",tmpFilePath], stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+                #process = subprocess.Popen(["{}ffmpeg".format(FFMPEG_DIR),"-hide_banner", "-loglevel", "error","-y","-ss",str(t_start),"-i",inputFilePath,"-vn", "-t",str(SHORT_FRAME_DURATION),"-c","copy",tmpFilePath], stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+                process = subprocess.Popen(["{}ffmpeg".format(FFMPEG_DIR),"-hide_banner", "-loglevel", "error","-y","-ss",str(t_start),"-i",inputFilePath, "-t",str(SHORT_FRAME_DURATION),"-c","copy",tmpFilePath], stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+                process.wait()
+                ffmpegTime += time.clock() - t_
+                stdout = process.communicate()[0]
+                stderr = process.communicate()[1]
+                if len(stderr) != 0:
+                    logger.error(stderr.decode())
+                # print("ffmpeg:{}".format(process.wait()))
+                t_ = time.clock()
+                process = subprocess.Popen(["{}ffprobe".format(FFMPEG_DIR),"-hide_banner", "-loglevel", "error", "-f", "lavfi","-i", ffprobeLavfiStrTmp,"-show_frames", "-show_format", "-print_format", "json"], stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+                stdout = process.communicate()[0]
+                stderr = process.communicate()[1]
+                if len(stderr) != 0:
+                    logger.error(stderr.decode())
+                parsed =  json.loads(stdout)
+                process.wait()
+                ffprobeTime += time.clock() - t_
+                # print("ffprobe:{}".format(process.wait()))
+                for frame in reversed(parsed["frames"]):
+                    if "tags" in frame:
+                        lavfi_r128_I = float(frame["tags"]["lavfi.r128.I"])
+                        lavfi_r128_LRA = float(frame["tags"]["lavfi.r128.LRA"])
+                        lavfi_r128_LRA_low = float(frame["tags"]["lavfi.r128.LRA.low"])
+                        lavfi_r128_LRA_high = float(frame["tags"]["lavfi.r128.LRA.high"])
+                        lavfi_r128_true_peaks_ch0 = float(frame["tags"]["lavfi.r128.true_peaks_ch0"])
+                        # lavfi_r128_true_peaks_ch1 = float(frame["tags"]["lavfi.r128.true_peaks_ch1"])
+                        # shortFrames.append([lavfi_r128_I,lavfi_r128_LRA,lavfi_r128_LRA_low,lavfi_r128_LRA_high,lavfi_r128_true_peaks_ch0,lavfi_r128_true_peaks_ch1,
+                        #                     t_start,t_finish,count,inputFilePath])
+                        shortFrames.append([lavfi_r128_I,lavfi_r128_LRA,lavfi_r128_LRA_low,lavfi_r128_LRA_high,lavfi_r128_true_peaks_ch0,
+                                            t_start,t_finish,count,inputFilePath])
+                        break
+                t_start = t_finish
+                t_finish = t_start +  SHORT_FRAME_DURATION
+                count+=1
+                # print(count,t_start , t_finish)
+            logger.info('ffmpeg/ffprobe execution time : {}'.format(ffmpegTime/ffprobeTime))
+        except:
+            logger.exception("Somthing go wrang:")
+
 with open(OUT_DIR+'\\sound_level_total.csv', 'w', newline='') as outFile:
+    # fieldnames = ["lavfi_r128_I_total","lavfi_r128_LRA_total","lavfi_r128_LRA_low_total","lavfi_r128_LRA_high_total","lavfi_r128_true_peaks_ch0_total",
+    #               "lavfi_r128_true_peaks_ch1_total","totalDuration,inputFilePath"]
     fieldnames = ["lavfi_r128_I_total","lavfi_r128_LRA_total","lavfi_r128_LRA_low_total","lavfi_r128_LRA_high_total","lavfi_r128_true_peaks_ch0_total",
-                  "lavfi_r128_true_peaks_ch1_total","totalDuration,inputFilePath"]
+                  "totalDuration,inputFilePath"]
     outCsvWriter = csv.writer(outFile, delimiter=';',quoting=csv.QUOTE_MINIMAL)
     outCsvWriter.writerow(fieldnames)
     outCsvWriter.writerows(total)
 with open(OUT_DIR+'\\sound_level.csv', 'w', newline='') as outFile:
-    fieldnames = ["lavfi_r128_I","lavfi_r128_LRA","lavfi_r128_LRA_low","lavfi_r128_LRA_high","lavfi_r128_true_peaks_ch0","lavfi_r128_true_peaks_ch1",
+    # fieldnames = ["lavfi_r128_I","lavfi_r128_LRA","lavfi_r128_LRA_low","lavfi_r128_LRA_high","lavfi_r128_true_peaks_ch0","lavfi_r128_true_peaks_ch1",
+    #               "t_start","t_finish","count","inputFilePath"]
+    fieldnames = ["lavfi_r128_I","lavfi_r128_LRA","lavfi_r128_LRA_low","lavfi_r128_LRA_high","lavfi_r128_true_peaks_ch0",
                   "t_start","t_finish","count","inputFilePath"]
     outCsvWriter = csv.writer(outFile, delimiter=';',quoting=csv.QUOTE_MINIMAL)
     outCsvWriter.writerow(fieldnames)
