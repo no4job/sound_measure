@@ -1,0 +1,29 @@
+{'media_type': 'audio'
+  'stream_index': 0
+  'key_frame': 1
+  'pkt_pts': 609600
+  'pkt_pts_time': '12.700000'
+  'pkt_dts': 609600
+  'pkt_dts_time': '12.700000'
+  'best_effort_timestamp': 609600
+  'best_effort_timestamp_time': '12.700000'
+  'pkt_duration': 4800
+  'pkt_duration_time': '0.100000'
+  'pkt_pos': '2437164'
+  'pkt_size': '76800'
+  'sample_fmt': 'dbl'
+  'nb_samples': 4800
+  'channels': 2
+  'channel_layout': 'stereo'
+  'tags': {
+    'lavfi.r128.M': '-37.179'
+    'lavfi.r128.S': '-37.893'
+    'lavfi.r128.I': '-36.498'
+    'lavfi.r128.LRA': '4.140'
+    'lavfi.r128.LRA.low': '-38.360'
+    'lavfi.r128.LRA.high': '-34.220'
+    'lavfi.r128.true_peaks_ch0': '0.094'
+    'lavfi.r128.true_peaks_ch1': '0.094'
+  }
+}
+

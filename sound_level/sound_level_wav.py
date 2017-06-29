@@ -8,12 +8,30 @@ import pprint
 import logging
 import time
 
+class dialect_tab(csv.excel):
+    delimiter = '\t'
+
+class dialect_semicolon(csv.excel):
+    delimiter = ';'
+
 class csvLog:
-    def __init__(self,filename,mode = "w"):
-        if mode.lower() == "w":
+    def __init__(self,filename, append = 0,save_intial = 0):
+        if save_intial == 1:
+            if os.path.exists(filename):
+                with open(filename,"r") as self.outFile:
+                    self.outCsvDictReader = csv.DictReader(self.outFile, dialect=dialect_tab)
+                    self.initialCSV = []
+                    for row in self.outCsvDictReader:
+                        self.initialCSV.append(row)
+                    self.initialCSV = tuple(self.initialCSV)
+            else:
+                self.initialCSV = ()
+        if append == 1:
+            self.outFile = open(filename, 'a+', newline='')
+        else:
             if os.path.exists(filename):
                 os.remove(filename)
-        self.outFile = open(filename, 'w', newline='')
+            self.outFile = open(filename, 'w+', newline='')
         self.outCsvWriter = csv.writer(self.outFile, delimiter='\t',quoting=csv.QUOTE_MINIMAL)
     def close(self):
         self.outFile.close()
@@ -25,8 +43,29 @@ class csvLog:
     def add_rows(self,rows):
         self.outCsvWriter.writerows(rows)
         self.outFile.flush()
+    def getInitialCSV(self):
+        return self.initialCSV
 
+# with open (FILE_LIST, 'r') as fileList:
+#     fileListReader = csv.DictReader(fileList, dialect=dialect)
+#     for row in fileListReader:
+#         totalFileSizeOfList += int(row["size"])
+#         totalDurationOfList += int(row["duration"])
+#         totalNumberOfFiles += 1
 
+def localize_float_row_dict(row):
+    out = []
+    for value in row:
+        if isinstance(value, float):
+            out.append(str(value).replace('.', ','))
+        else:
+            out.append(str(value))
+    return out
+
+def localize_float_rows(rows):
+    return [
+        localize_float_row_dict(row)  for row in rows
+        ]
 # print (os.getcwd())
 FFMPEG_DIR="..\\FFMPEG\\BIN\\"
 IN_DIR="../IN/"
@@ -35,6 +74,11 @@ r128_FRAME_DURATION=0.1
 SHORT_FRAME_DURATION = 15
 # CALC_TOTAL = 1
 CALC_SHORT_FRAMES = 0
+SKIP_FILES_IN_LOG = 1
+APPEND_TOTAL_LOG = 1
+APPEND_SHORT_FRAMES_LOG = 0
+SAVE_INITIAL_TOTAL_LOG = 1
+SAVE_INITIAL_SHORT_FRAMES_LOG = 0
 # LONG_FRAME_DURATION = SHORT_FRAME_DURATION*12 # 15*12=180s = 3 min
 # SHORT_FRAME_SIZE=SHORT_FRAME_DURATION // r128_FRAME_DURATION
 # LONG_FRAME_SIZE=LONG_FRAME_DURATION // r128_FRAME_DURATION
@@ -50,8 +94,12 @@ stream_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 logger.addHandler(stream_handler)
 
-logger.info('START with option CALC_SHORT_FRAMES={}'.format(CALC_SHORT_FRAMES))
-
+logger.info('START with next options: '
+            'SHORT_FRAME_DURATION = {} CALC_SHORT_FRAMES={} SKIP_FILES_IN_LOG={} '
+            'APPEND_TOTAL_LOG={} APPEND_SHORT_FRAMES_LOG={} SAVE_INITIAL_TOTAL_LOG={} '
+            'SAVE_INITIAL_SHORT_FRAMES_LOG={}'.format(SHORT_FRAME_DURATION,CALC_SHORT_FRAMES,SKIP_FILES_IN_LOG,
+                                                        APPEND_TOTAL_LOG,APPEND_SHORT_FRAMES_LOG,SAVE_INITIAL_TOTAL_LOG,
+                                                      SAVE_INITIAL_SHORT_FRAMES_LOG))
 shortFrames = []
 total=[]
 # rootdir = "D:\Полезное видео\GIT"
@@ -60,20 +108,26 @@ total=[]
 # rootdir = "\\\\ANDROID_6F6C\share\sda\sda1\cs224n 2017"
 # rootdir = "L:\MGS-HNAS-FS-01.mgs.ru"
 # rootdir = "H:\\test2"
-rootdir = "\\\\MGS-HNAS-FS-01.mgs.ru\SAVFSZ_R"
-totalLevelCSV = csvLog(OUT_DIR+'\\sound_level_total.csv')
-totalLevelCSV.add_row(["lavfi_r128_I_total","lavfi_r128_LRA_total","lavfi_r128_LRA_low_total","lavfi_r128_LRA_high_total","lavfi_r128_true_peaks_ch0_total",
-                       "totalDuration,inputFilePath"])
+#***rootdir = "\\\\MGS-HNAS-FS-01.mgs.ru\SAVFSZ_R"
+rootdir =""
+totalLevelCSV = csvLog(OUT_DIR+'\\sound_level_total.csv',APPEND_TOTAL_LOG,SAVE_INITIAL_TOTAL_LOG)
+if not APPEND_TOTAL_LOG:
+    totalLevelCSV.add_row(["path","time","size","duration","actual_duration","lavfi_r128_I","lavfi_r128_LRA","lavfi_r128_LRA_low","lavfi_r128_LRA_high","lavfi_r128_true_peaks_ch0",
+                           "error","exception"])
 
-shortFrameLevelCSV = csvLog(OUT_DIR+'\\sound_level_frames.csv')
-shortFrameLevelCSV.add_row(["lavfi_r128_I","lavfi_r128_LRA","lavfi_r128_LRA_low","lavfi_r128_LRA_high","lavfi_r128_true_peaks_ch0",
-                           "t_start","t_finish","count","inputFilePath"])
+shortFrameLevelCSV = csvLog(OUT_DIR+'\\sound_level_frames.csv',APPEND_SHORT_FRAMES_LOG,SAVE_INITIAL_SHORT_FRAMES_LOG)
+if not APPEND_SHORT_FRAMES_LOG:
+    shortFrameLevelCSV.add_row(["path","time","size","duration","actual_duration","lavfi_r128_I","lavfi_r128_LRA","lavfi_r128_LRA_low","lavfi_r128_LRA_high","lavfi_r128_true_peaks_ch0",
+                           "t_start","t_finish","count","error","exception"])
 
 if not os.path.exists(FILE_LIST):
     logger.error("file {} not found".format(FILE_LIST))
     exit(-1)
-class dialect(csv.excel):
-    delimiter = ';'
+# for row in totalLevelCSV.getInitialCSV():
+#     print (row)
+
+initialCSVFileList = [row["path"]for row in totalLevelCSV.getInitialCSV()]
+
 totalFileSizeOfList = 0
 totalDurationOfList = 0
 totalNumberOfFiles = 0
@@ -81,23 +135,35 @@ fileCount = 0
 totalCalcTime =0
 sizeOfProcessedFiles=0
 durationOfProcessedFiles=0
-
+skipped = 0
+inputFilePathSave = ""
 with open (FILE_LIST, 'r') as fileList:
-    fileListReader = csv.DictReader(fileList, dialect=dialect)
+    fileListReader = csv.DictReader(fileList, dialect=dialect_tab)
     for row in fileListReader:
+        if os.path.join(rootdir, row["path"]) in initialCSVFileList:
+            skipped +=1
+            continue
         totalFileSizeOfList += int(row["size"])
         totalDurationOfList += int(row["duration"])
         totalNumberOfFiles += 1
+logger.info('list contains {} files, skipped as treated {}, left: {} files, total size {:.1f}Mb, total duration {:.1f}мин'.format(totalNumberOfFiles+skipped,skipped,totalNumberOfFiles,
+                                                                                                      totalFileSizeOfList/1000000,totalDurationOfList/60))
 per_file_t_start = time.clock()
 with open (FILE_LIST, 'r') as fileList:
-    fileListReader = csv.DictReader(fileList, dialect=dialect)
+    fileListReader = csv.DictReader(fileList, dialect=dialect_tab)
     for row in fileListReader:
+        total=[]
+        shortFrames = []
+        totalCalcError = 0
+        if os.path.join(rootdir, row["path"]) in initialCSVFileList:
+            continue
         fileCount+=1
-        unix_time = int(row["unix_time"])
+        timeStamp = float(row["time"].replace(',', '.'))
         file_size = int(row["size"])
         duration = int(row["duration"])
         path = row["path"]
         inputFilePath = os.path.join(rootdir, path)
+        inputFilePathSave = inputFilePath
         sizeOfProcessedFiles += file_size
         durationOfProcessedFiles += duration
 # for subdir, dirs, files in os.walk(rootdir):
@@ -123,12 +189,13 @@ with open (FILE_LIST, 'r') as fileList:
         try:
             # process = subprocess.Popen(["{}ffmpeg".format(FFMPEG_DIR),"-hide_banner", "-loglevel", "error","-y","-i",inputFilePath,"-vn", "-c","copy",tmpFilePath], stdout=subprocess.PIPE,stderr=subprocess.PIPE)
             process = subprocess.Popen(["{}ffmpeg".format(FFMPEG_DIR),"-hide_banner", "-loglevel", "error","-y","-i",inputFilePath,"-vn", "-c","copy",wavFilePath], stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-            process.wait()
+            process.wait(300)
             stdout = process.communicate()[0]
             stderr = process.communicate()[1]
             if len(stderr) != 0:
+                totalCalcError = 1
                 logger.error(stderr.decode())
-            inputFilePathSave = inputFilePath
+            # inputFilePathSave = inputFilePath
             inputFilePath = wavFilePath
             # process = subprocess.Popen(["{}ffprobe".format(FFMPEG_DIR),"-hide_banner", "-loglevel", "error",inputFilePath+"rrr" ,"-show_format", "-print_format", "json"], stdout=subprocess.PIPE)
             process = subprocess.Popen(["{}ffprobe".format(FFMPEG_DIR),"-hide_banner", "-loglevel", "error",inputFilePath,"-show_format", "-print_format", "json"], stdout=subprocess.PIPE,stderr=subprocess.PIPE)
@@ -137,18 +204,20 @@ with open (FILE_LIST, 'r') as fileList:
             # print ('STDOUT:{}'.format(stdout))
             # print ('STDOUT:{} \n STDERR:{}'.format(stdout,stderr))
             if len(stderr) != 0:
+                totalCalcError = 1
                 logger.error(stderr.decode())
             parsed =  json.loads(stdout)
-            totalDuration=float(parsed["format"]["duration"])
+            totalActualDuration=float(parsed["format"]["duration"])
             process = subprocess.Popen(["{}ffprobe".format(FFMPEG_DIR),"-hide_banner", "-loglevel", "error", "-f", "lavfi","-i", ffprobeLavfiStr, "-show_frames","-show_format", "-print_format", "json"], stdout=subprocess.PIPE,stderr=subprocess.PIPE)
             stdout = process.communicate()[0]
             stderr = process.communicate()[1]
             if len(stderr) != 0:
+                totalCalcError = 1
                 logger.error(stderr.decode())
             # print ('STDOUT:{}'.format(stdout))
             parsed =  json.loads(stdout)
-            process.wait()
-            total=[]
+            process.wait(900)
+            # total=[]
             for frame in reversed(parsed["frames"]):
                 if "tags" in frame:
                     lavfi_r128_I_total = float(frame["tags"]["lavfi.r128.I"])
@@ -159,58 +228,67 @@ with open (FILE_LIST, 'r') as fileList:
                     # lavfi_r128_true_peaks_ch1_total = float(frame["tags"]["lavfi.r128.true_peaks_ch1"])
                     # total.append([lavfi_r128_I_total,lavfi_r128_LRA_total,lavfi_r128_LRA_low_total,lavfi_r128_LRA_high_total,lavfi_r128_true_peaks_ch0_total,lavfi_r128_true_peaks_ch1_total,
                     #               totalDuration,inputFilePath])
-                    total.append([lavfi_r128_I_total,lavfi_r128_LRA_total,lavfi_r128_LRA_low_total,lavfi_r128_LRA_high_total,lavfi_r128_true_peaks_ch0_total,
-                                  totalDuration,inputFilePathSave])
+                    total.append([inputFilePathSave,timeStamp,file_size,duration,totalActualDuration,lavfi_r128_I_total,lavfi_r128_LRA_total,
+                                  lavfi_r128_LRA_low_total,lavfi_r128_LRA_high_total,lavfi_r128_true_peaks_ch0_total,
+                                  totalCalcError,0])
                     break
-            totalLevelCSV.add_rows(total)
+            # totalLevelCSV.add_rows(total)
             t_start = 0
             t_finish = t_start +  SHORT_FRAME_DURATION
             count = 0
             ffmpegTime=0
             ffprobeTime=0
-            while  t_finish <= totalDuration and CALC_SHORT_FRAMES == 1:
-                t_ = time.clock()
-                #process = subprocess.Popen(["{}ffmpeg".format(FFMPEG_DIR),"-hide_banner", "-loglevel", "error","-y","-i",inputFilePath,"-vn", "-ss",str(t_start),"-t",str(SHORT_FRAME_DURATION),"-c","copy",tmpFilePath], stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-                #process = subprocess.Popen(["{}ffmpeg".format(FFMPEG_DIR),"-hide_banner", "-loglevel", "error","-y","-i",inputFilePath, "-ss",str(t_start),"-t",str(SHORT_FRAME_DURATION),"-c","copy",tmpFilePath], stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-                #process = subprocess.Popen(["{}ffmpeg".format(FFMPEG_DIR),"-hide_banner", "-loglevel", "error","-y","-ss",str(t_start),"-i",inputFilePath,"-vn", "-t",str(SHORT_FRAME_DURATION),"-c","copy",tmpFilePath], stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-                process = subprocess.Popen(["{}ffmpeg".format(FFMPEG_DIR),"-hide_banner", "-loglevel", "error","-y","-ss",str(t_start),"-i",inputFilePath, "-t",str(SHORT_FRAME_DURATION),"-c","copy",tmpFilePath], stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-                process.wait()
-                ffmpegTime += time.clock() - t_
-                stdout = process.communicate()[0]
-                stderr = process.communicate()[1]
-                if len(stderr) != 0:
-                    logger.error(stderr.decode())
-                # print("ffmpeg:{}".format(process.wait()))
-                t_ = time.clock()
-                process = subprocess.Popen(["{}ffprobe".format(FFMPEG_DIR),"-hide_banner", "-loglevel", "error", "-f", "lavfi","-i", ffprobeLavfiStrTmp,"-show_frames", "-show_format", "-print_format", "json"], stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-                stdout = process.communicate()[0]
-                stderr = process.communicate()[1]
-                if len(stderr) != 0:
-                    logger.error(stderr.decode())
-                parsed =  json.loads(stdout)
-                process.wait()
-                ffprobeTime += time.clock() - t_
-                # print("ffprobe:{}".format(process.wait()))
-                for frame in reversed(parsed["frames"]):
-                    if "tags" in frame:
-                        lavfi_r128_I = float(frame["tags"]["lavfi.r128.I"])
-                        lavfi_r128_LRA = float(frame["tags"]["lavfi.r128.LRA"])
-                        lavfi_r128_LRA_low = float(frame["tags"]["lavfi.r128.LRA.low"])
-                        lavfi_r128_LRA_high = float(frame["tags"]["lavfi.r128.LRA.high"])
-                        lavfi_r128_true_peaks_ch0 = float(frame["tags"]["lavfi.r128.true_peaks_ch0"])
-                        # lavfi_r128_true_peaks_ch1 = float(frame["tags"]["lavfi.r128.true_peaks_ch1"])
-                        # shortFrames.append([lavfi_r128_I,lavfi_r128_LRA,lavfi_r128_LRA_low,lavfi_r128_LRA_high,lavfi_r128_true_peaks_ch0,lavfi_r128_true_peaks_ch1,
-                        #                     t_start,t_finish,count,inputFilePath])
-                        shortFrames.append([lavfi_r128_I,lavfi_r128_LRA,lavfi_r128_LRA_low,lavfi_r128_LRA_high,lavfi_r128_true_peaks_ch0,
-                                            t_start,t_finish,count,inputFilePathSave])
-                        break
-                t_start = t_finish
-                t_finish = t_start +  SHORT_FRAME_DURATION
-                count+=1
-                # print(count,t_start , t_finish)
-            if CALC_SHORT_FRAMES == 1:
-                logger.debug('ffmpeg/ffprobe execution time : {}'.format(ffmpegTime/ffprobeTime))
-
+            shortFrameCalcError = 0
+            try:
+                while  t_finish <= totalActualDuration and CALC_SHORT_FRAMES == 1:
+                    t_ = time.clock()
+                    #process = subprocess.Popen(["{}ffmpeg".format(FFMPEG_DIR),"-hide_banner", "-loglevel", "error","-y","-i",inputFilePath,"-vn", "-ss",str(t_start),"-t",str(SHORT_FRAME_DURATION),"-c","copy",tmpFilePath], stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+                    #process = subprocess.Popen(["{}ffmpeg".format(FFMPEG_DIR),"-hide_banner", "-loglevel", "error","-y","-i",inputFilePath, "-ss",str(t_start),"-t",str(SHORT_FRAME_DURATION),"-c","copy",tmpFilePath], stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+                    #process = subprocess.Popen(["{}ffmpeg".format(FFMPEG_DIR),"-hide_banner", "-loglevel", "error","-y","-ss",str(t_start),"-i",inputFilePath,"-vn", "-t",str(SHORT_FRAME_DURATION),"-c","copy",tmpFilePath], stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+                    process = subprocess.Popen(["{}ffmpeg".format(FFMPEG_DIR),"-hide_banner", "-loglevel", "error","-y","-ss",str(t_start),"-i",inputFilePath, "-t",str(SHORT_FRAME_DURATION),"-c","copy",tmpFilePath], stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+                    process.wait(300)
+                    ffmpegTime += time.clock() - t_
+                    stdout = process.communicate()[0]
+                    stderr = process.communicate()[1]
+                    if len(stderr) != 0:
+                        shortFrameCalcError = 1
+                        logger.error(stderr.decode())
+                    # print("ffmpeg:{}".format(process.wait()))
+                    t_ = time.clock()
+                    process = subprocess.Popen(["{}ffprobe".format(FFMPEG_DIR),"-hide_banner", "-loglevel", "error", "-f", "lavfi","-i", ffprobeLavfiStrTmp,"-show_frames", "-show_format", "-print_format", "json"], stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+                    stdout = process.communicate()[0]
+                    stderr = process.communicate()[1]
+                    if len(stderr) != 0:
+                        shortFrameCalcError = 1
+                        logger.error(stderr.decode())
+                    parsed =  json.loads(stdout)
+                    process.wait(900)
+                    ffprobeTime += time.clock() - t_
+                    # print("ffprobe:{}".format(process.wait()))
+                    for frame in reversed(parsed["frames"]):
+                        if "tags" in frame:
+                            lavfi_r128_I = float(frame["tags"]["lavfi.r128.I"])
+                            lavfi_r128_LRA = float(frame["tags"]["lavfi.r128.LRA"])
+                            lavfi_r128_LRA_low = float(frame["tags"]["lavfi.r128.LRA.low"])
+                            lavfi_r128_LRA_high = float(frame["tags"]["lavfi.r128.LRA.high"])
+                            lavfi_r128_true_peaks_ch0 = float(frame["tags"]["lavfi.r128.true_peaks_ch0"])
+                            # lavfi_r128_true_peaks_ch1 = float(frame["tags"]["lavfi.r128.true_peaks_ch1"])
+                            # shortFrames.append([lavfi_r128_I,lavfi_r128_LRA,lavfi_r128_LRA_low,lavfi_r128_LRA_high,lavfi_r128_true_peaks_ch0,lavfi_r128_true_peaks_ch1,
+                            #                     t_start,t_finish,count,inputFilePath])
+                            shortFrames.append([inputFilePathSave,timeStamp,file_size,duration,totalActualDuration,
+                                                lavfi_r128_I,lavfi_r128_LRA,lavfi_r128_LRA_low,lavfi_r128_LRA_high,lavfi_r128_true_peaks_ch0,
+                                                t_start,t_finish,count,shortFrameCalcError,0])
+                            break
+                    t_start = t_finish
+                    t_finish = t_start +  SHORT_FRAME_DURATION
+                    count+=1
+                    # print(count,t_start , t_finish)
+                if CALC_SHORT_FRAMES == 1:
+                    logger.debug('ffmpeg/ffprobe execution time : {}'.format(ffmpegTime/ffprobeTime))
+            except:
+                shortFrames.append([inputFilePathSave,timeStamp,file_size,duration,"",
+                                    "","","","","",t_start,t_finish,count,1,1])
+                logger.exception("Exception in total: Something go wrong:")
             totalCalcTime = time.clock()
             per_file_t_finish = totalCalcTime
             calcTime = per_file_t_finish - per_file_t_start
@@ -219,9 +297,16 @@ with open (FILE_LIST, 'r') as fileList:
             # remainTime = totalCalcTime*(totalFileSizeOfList/sizeOfProcessedFiles -1)
             remainTime = totalCalcTime*(totalDurationOfList/durationOfProcessedFiles -1)
             logger.info('calc. time {:.1f}min\ttotal calc. time {:.1f}min\tremain {:.1f}min'.format(calcTime/60,totalCalcTime/60,remainTime/60))
-            shortFrameLevelCSV.add_rows(shortFrames)
+            # totalLevelCSV.add_rows(total)
+            totalLevelCSV.add_rows(localize_float_rows(total))
+            # shortFrameLevelCSV.add_rows(shortFrames)
+            if CALC_SHORT_FRAMES == 1:
+                shortFrameLevelCSV.add_rows(localize_float_rows(shortFrames))
         except:
-            logger.exception("Somthing go wrang:")
+            total.append([inputFilePathSave,timeStamp,file_size,duration,"","","",
+                          "","","", 1,1])
+            totalLevelCSV.add_rows(localize_float_rows(total))
+            logger.exception("Exception in total: Something go wrong:")
 
 shortFrameLevelCSV.close()
 totalLevelCSV.close()
