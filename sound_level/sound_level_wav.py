@@ -7,6 +7,7 @@ import csv
 import pprint
 import logging
 import time
+import shutil
 
 class dialect_tab(csv.excel):
     delimiter = '\t'
@@ -66,13 +67,35 @@ def localize_float_rows(rows):
     return [
         localize_float_row_dict(row)  for row in rows
         ]
+def extract_audio(inputFilePath,outputFilePath,t_start=None,t_finish=None,duration=None):
+    try:
+        if t_start!= None and t_finish != None:
+            duration = t_finish - t_start
+        if (duration != None and duration < 0) or (t_start != None and t_start < 0) or  (t_finish != None and t_finish) <0:
+            raise ValueError('wrong time parameters extract_audio(inputFilePath,outputFilePath,t_start={},t_finish={},duration={})'.format(t_start,t_finish,duration))
+        if t_start==None:
+            process = subprocess.Popen(["{}ffmpeg".format(FFMPEG_DIR),"-hide_banner", "-loglevel", "error","-y","-i",inputFilePath,"-vn", "-c","copy","-acodec", "pcm_s16le","-ar", "16000",outputFilePath], stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        else:
+            process = subprocess.Popen(["{}ffmpeg".format(FFMPEG_DIR),"-hide_banner", "-loglevel", "error","-y","-i",inputFilePath,"-ss",str(t_start), "-t",str(duration),"-vn", "-c","copy","-acodec", "pcm_s16le","-ar", "16000",outputFilePath], stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+            # process = subprocess.Popen(["{}ffmpeg".format(FFMPEG_DIR),"-hide_banner", "-loglevel", "error","-y","-ss",str(t_start),"-i",inputFilePath, "-t",str(duration),"-c","copy",tmpFilePath], stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        process.wait(300)
+        # stdout = process.communicate()[0]
+        stderr = process.communicate()[1]
+        if len(stderr) != 0:
+            logger.error(stderr.decode())
+    except:
+        logger.exception("Exception in total: Something go wrong:")
+
+
 # print (os.getcwd())
 FFMPEG_DIR="..\\FFMPEG\\BIN\\"
 IN_DIR="../IN/"
 OUT_DIR="../OUT"
+EXTRACTED_WAV_DIR=OUT_DIR+"/extracted_wav"
 r128_FRAME_DURATION=0.1
-SHORT_FRAME_DURATION = 15
-MIN_LAST_FRAME = 5
+SHORT_FRAME_DURATION = 180
+SHORT_FRAME_SHIFT_STEP = 15
+MIN_LAST_SHIFT_STEP = 5
 # CALC_TOTAL = 1
 CALC_SHORT_FRAMES = 1
 SKIP_FILES_IN_LOG = 1
@@ -80,7 +103,7 @@ APPEND_TOTAL_LOG = 1
 APPEND_SHORT_FRAMES_LOG = 0
 SAVE_INITIAL_TOTAL_LOG = 1
 SAVE_INITIAL_SHORT_FRAMES_LOG = 0
-
+EXTRACT_AUDIO_ONLY = 1
 # LONG_FRAME_DURATION = SHORT_FRAME_DURATION*12 # 15*12=180s = 3 min
 # SHORT_FRAME_SIZE=SHORT_FRAME_DURATION // r128_FRAME_DURATION
 # LONG_FRAME_SIZE=LONG_FRAME_DURATION // r128_FRAME_DURATION
@@ -99,9 +122,9 @@ logger.addHandler(stream_handler)
 logger.info('START with next options: '
             'SHORT_FRAME_DURATION = {} CALC_SHORT_FRAMES={} SKIP_FILES_IN_LOG={} '
             'APPEND_TOTAL_LOG={} APPEND_SHORT_FRAMES_LOG={} SAVE_INITIAL_TOTAL_LOG={} '
-            'SAVE_INITIAL_SHORT_FRAMES_LOG={}'.format(SHORT_FRAME_DURATION,CALC_SHORT_FRAMES,SKIP_FILES_IN_LOG,
+            'SAVE_INITIAL_SHORT_FRAMES_LOG={} EXTRACT_AUDIO_ONLY = {}'.format(SHORT_FRAME_DURATION,CALC_SHORT_FRAMES,SKIP_FILES_IN_LOG,
                                                         APPEND_TOTAL_LOG,APPEND_SHORT_FRAMES_LOG,SAVE_INITIAL_TOTAL_LOG,
-                                                      SAVE_INITIAL_SHORT_FRAMES_LOG))
+                                                      SAVE_INITIAL_SHORT_FRAMES_LOG,EXTRACT_AUDIO_ONLY))
 shortFrames = []
 total=[]
 # rootdir = "D:\Полезное видео\GIT"
@@ -112,6 +135,26 @@ total=[]
 # rootdir = "H:\\test2"
 #***rootdir = "\\\\MGS-HNAS-FS-01.mgs.ru\SAVFSZ_R"
 rootdir =""
+
+if EXTRACT_AUDIO_ONLY == 1:
+    if not os.path.exists(EXTRACTED_WAV_DIR):
+        os.mkdir(EXTRACTED_WAV_DIR)
+    else:
+        shutil.rmtree(EXTRACTED_WAV_DIR)
+        os.mkdir(EXTRACTED_WAV_DIR)
+    with open (FILE_LIST, 'r') as fileList:
+
+        fileListReader = csv.DictReader(fileList, dialect=dialect_tab)
+        fileListReader_ = list(fileListReader)
+        count = 1
+        for row in fileListReader_:
+            logger.info('Extract #{}/{} source path:{} '.format(count,len(fileListReader_),row["path"]))
+            outFilePath = EXTRACTED_WAV_DIR+'/'+ os.path.splitext(os.path.basename(row["path"]))[0]+".wav"
+            extract_audio(os.path.join(rootdir, row["path"]),outFilePath)
+            count+=1
+    exit (0)
+
+
 totalLevelCSV = csvLog(OUT_DIR+'\\sound_level_total.csv',APPEND_TOTAL_LOG,SAVE_INITIAL_TOTAL_LOG)
 if not APPEND_TOTAL_LOG:
     totalLevelCSV.add_row(["path","time","size","duration","actual_duration","calc_time_stamp","lavfi_r128_I","lavfi_r128_LRA","lavfi_r128_LRA_low","lavfi_r128_LRA_high","lavfi_r128_true_peaks_ch0",
@@ -163,6 +206,9 @@ else:
                 .format(totalNumberOfFiles,skipped,totalNumberOfFiles-skipped,totalNumberOfFiles,
                         totalFileSizeOfList/1000000,totalDurationOfList/60))
 per_file_t_start = time.clock()
+
+
+
 with open (FILE_LIST, 'r') as fileList:
     fileListReader = csv.DictReader(fileList, dialect=dialect_tab)
     for row in fileListReader:
@@ -256,7 +302,7 @@ with open (FILE_LIST, 'r') as fileList:
 
  #******************************
             t_start = 0
-            if totalActualDuration - (t_start +  SHORT_FRAME_DURATION) < MIN_LAST_FRAME:
+            if totalActualDuration - (t_start +  SHORT_FRAME_DURATION) < MIN_LAST_SHIFT_STEP:
                 t_finish = totalActualDuration
             else:
                 t_finish = t_start +  SHORT_FRAME_DURATION
@@ -264,10 +310,14 @@ with open (FILE_LIST, 'r') as fileList:
             ffmpegTime=0
             ffprobeTime=0
             shortFrameCalcError = 0
-            if SHORT_FRAME_DURATION*(((totalActualDuration/SHORT_FRAME_DURATION)) - ((totalActualDuration/SHORT_FRAME_DURATION)//1)) >= MIN_LAST_FRAME:
-                total_count= int((totalActualDuration/SHORT_FRAME_DURATION)//1) + 1
+            # if SHORT_FRAME_DURATION*(((totalActualDuration/SHORT_FRAME_DURATION)) - ((totalActualDuration/SHORT_FRAME_DURATION)//1)) >= MIN_LAST_FRAME:
+            if SHORT_FRAME_SHIFT_STEP*(((totalActualDuration-SHORT_FRAME_DURATION)/SHORT_FRAME_SHIFT_STEP) - (((totalActualDuration-SHORT_FRAME_DURATION)/SHORT_FRAME_SHIFT_STEP)//1)) >= MIN_LAST_SHIFT_STEP:
+                # total_count= int((totalActualDuration/SHORT_FRAME_DURATION)//1) + 1
+                # total_count= int(((totalActualDuration-SHORT_FRAME_SHIFT_STEP)/SHORT_FRAME_SHIFT_STEP)//1) + 1
+                total_count= int(((totalActualDuration-SHORT_FRAME_DURATION)/SHORT_FRAME_SHIFT_STEP)//1) + 2
             else:
-                total_count= int((totalActualDuration/SHORT_FRAME_DURATION)//1)
+                # total_count= int(((totalActualDuration-SHORT_FRAME_SHIFT_STEP)/SHORT_FRAME_SHIFT_STEP)//1)
+                total_count= int(((totalActualDuration-SHORT_FRAME_DURATION)/SHORT_FRAME_SHIFT_STEP)//1) + 1
             try:
                 while  t_finish <= totalActualDuration and count < total_count and CALC_SHORT_FRAMES == 1:
                     t_ = time.clock()
@@ -308,15 +358,18 @@ with open (FILE_LIST, 'r') as fileList:
                                                 time.clock(),lavfi_r128_I,lavfi_r128_LRA,lavfi_r128_LRA_low,lavfi_r128_LRA_high,lavfi_r128_true_peaks_ch0,
                                                 t_start,t_finish,count,shortFrameCalcError,0])
                             break
-                    t_start = t_finish
+                    # t_start = t_finish
+                    t_start += SHORT_FRAME_SHIFT_STEP
                     # t_finish = t_start +  SHORT_FRAME_DURATION
                     count+=1
                     if count+1 > total_count:
                         break
                     elif count+1 == total_count:
                         t_finish = totalActualDuration
+                        t_start = t_finish - SHORT_FRAME_DURATION
                     else:
                         t_finish = t_start +  SHORT_FRAME_DURATION
+                        # t_finish = t_start +  SHORT_FRAME_SHIFT_STEP
 
 
 
