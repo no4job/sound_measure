@@ -86,12 +86,18 @@ def extract_audio(inputFilePath,outputFilePath,t_start=None,t_finish=None,durati
     except:
         logger.exception("Exception in total: Something go wrong:")
 
+def seconds_to_time(sec):
+    hour = int(sec // 3600)
+    minutes = int((sec - sec // 3600)  // 60)
+    seconds = sec % 60
+    return (hour,minutes,seconds)
 
 # print (os.getcwd())
 FFMPEG_DIR="..\\FFMPEG\\BIN\\"
 IN_DIR="../IN/"
 OUT_DIR="../OUT"
 EXTRACTED_WAV_DIR=OUT_DIR+"/extracted_wav"
+EXTRACTED_WAV_FRAGMENTS_DIR = OUT_DIR+"/extracted_wav_fragments"
 r128_FRAME_DURATION=0.1
 SHORT_FRAME_DURATION = 180
 SHORT_FRAME_SHIFT_STEP = 15
@@ -104,6 +110,8 @@ APPEND_SHORT_FRAMES_LOG = 0
 SAVE_INITIAL_TOTAL_LOG = 1
 SAVE_INITIAL_SHORT_FRAMES_LOG = 0
 EXTRACT_AUDIO_ONLY = 1
+EXTRACT_AUDIO_FRAGMENTS = 1
+
 # LONG_FRAME_DURATION = SHORT_FRAME_DURATION*12 # 15*12=180s = 3 min
 # SHORT_FRAME_SIZE=SHORT_FRAME_DURATION // r128_FRAME_DURATION
 # LONG_FRAME_SIZE=LONG_FRAME_DURATION // r128_FRAME_DURATION
@@ -142,6 +150,13 @@ if EXTRACT_AUDIO_ONLY == 1:
     else:
         shutil.rmtree(EXTRACTED_WAV_DIR)
         os.mkdir(EXTRACTED_WAV_DIR)
+    if EXTRACT_AUDIO_FRAGMENTS == 1:
+        if not os.path.exists(EXTRACTED_WAV_FRAGMENTS_DIR):
+            os.mkdir(EXTRACTED_WAV_FRAGMENTS_DIR)
+        else:
+            shutil.rmtree(EXTRACTED_WAV_FRAGMENTS_DIR)
+            os.mkdir(EXTRACTED_WAV_FRAGMENTS_DIR)
+
     with open (FILE_LIST, 'r') as fileList:
 
         fileListReader = csv.DictReader(fileList, dialect=dialect_tab)
@@ -151,6 +166,18 @@ if EXTRACT_AUDIO_ONLY == 1:
             logger.info('Extract #{}/{} source path:{} '.format(count,len(fileListReader_),row["path"]))
             outFilePath = EXTRACTED_WAV_DIR+'/'+ os.path.splitext(os.path.basename(row["path"]))[0]+".wav"
             extract_audio(os.path.join(rootdir, row["path"]),outFilePath)
+            if EXTRACT_AUDIO_FRAGMENTS == 1:
+                fragment_exact_start =  "{}h {}m {}.{}s".format(*row["t_exact_start"].split("."))
+                fragment_exact_finish = "{}h {}m {}.{}s".format(*row["t_exact_finish"].split("."))
+                fragment_cut_start =  row["t_cut_start"].replace(',', '.')
+                fragment_cut_finish =  row["t_cut_finish"].replace(',', '.')
+                # out.append(str(value).replace('.', ','))
+                # d=seconds_to_time(float(fragment_cut_finish)-float(fragment_cut_start))
+                # f_duration = "{}h {}m {:.3f}s".format(d[0],d[1],d[2])
+                f_duration = "{}h {}m {:.3f}s".format(*seconds_to_time(float(fragment_cut_finish)-float(fragment_cut_start)))
+                time_description = "{}({}s) - {}({}s) ~ {}({:.3f}s)".format(fragment_exact_start,fragment_cut_start,fragment_exact_finish,fragment_cut_finish,f_duration,float(fragment_cut_finish)-float(fragment_cut_start))
+                outFilePath = EXTRACTED_WAV_FRAGMENTS_DIR+'/'+ os.path.splitext(os.path.basename(row["path"]))[0]+" "+time_description+".wav"
+                extract_audio(os.path.join(rootdir, row["path"]),outFilePath,float(fragment_cut_start),float(fragment_cut_finish))
             count+=1
     exit (0)
 
