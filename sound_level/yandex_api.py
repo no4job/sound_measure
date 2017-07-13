@@ -2,6 +2,7 @@ __author__ = 'mishninDY'
 import requests
 from furl import *
 import sys
+import uuid
 # from bs4 import BeautifulSoup
 
 '''
@@ -32,19 +33,24 @@ sudo update-ca-certificates
 '''
 client_id="QG8LA1VUNJLROPLT7ERTKPPE5CDVAT8GBIC8O60CG7SHFVRL4P7BTT6S4QLJAQ5K"
 api_key = "924df66908664524b2ed1e6c2eda6867"
-uuid = "59460be1a8ef482e8dbc531490b37688"
+api_key = "6372dda5-9674-4413-85ff-e9d0eb2f99a7"
+#my key
+api_key = "924df669-0866-4524-b2ed-1e6c2eda6867"
+# uuid = "59460be1a8ef482e8dbc531490b37688"
+uuid = str(uuid.uuid4()).replace("-","")
 topic="queries"
 user_agent = "Mozilla/5.0"
 IN_DIR="../sound_level/yandex-cloud-sound-samples/queries/"
 
 #Step 1
 # ref_url = "http://asr.ru/oauth/authorize?response_type=code&client_id={client_id}&state={state}&redirect_uri={redirect_uri}"
-# ref_url = "http://asr.yandex.net/asr_xml?uuid={uuid}&key={key}&topic={topic}"
-ref_url = "https://asr.yandex.net/asr_xml?uuid={uuid}&key={key}&topic={topic}"
+# ref_url = "http://asr.yandex.net/asr_xml?uuid={uuid}&key={key}&topic={topic}&lang=ru-RU"
+ref_url = "http://asr.yandex.net/asr_xml?uuid={uuid}&key={key}&topic={topic}"
 url=furl(ref_url).set(args={'uuid':uuid,'key':api_key,'topic':topic})
 print(url)
 
-headers={"Host":"asr.yandex.net", "Content-Type": "audio/x-wav"}
+# headers={"Host":"asr.yandex.net", "Content-Type": "audio/x-wav","User-Agent":"Mozilla/5.0 (Windows; U; Windows NT 6.1; rv:2.2) Gecko/20110201"}
+headers={"Host":"asr.yandex.net", "Content-Type": "audio/x-wav","User-Agent":"Mozilla/5.0 (Windows; U; Windows NT 6.1; rv:2.2) Gecko/20110201"}
 
 data = open(IN_DIR+"1.wav", 'rb').read()
 
