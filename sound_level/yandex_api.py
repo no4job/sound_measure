@@ -3,7 +3,6 @@ import requests
 from furl import *
 import sys
 import uuid
-# from bs4 import BeautifulSoup
 
 '''
 Get information about proxy: request.py:getproxies_environment()
@@ -31,28 +30,26 @@ reload changed variables from /etc/environment need logout->login or reboot
 copy proxy SSL certificate file(PEM) to  /etc/ssl/certs/ca-certificates.crt/
 sudo update-ca-certificates
 '''
-client_id="QG8LA1VUNJLROPLT7ERTKPPE5CDVAT8GBIC8O60CG7SHFVRL4P7BTT6S4QLJAQ5K"
-api_key = "924df66908664524b2ed1e6c2eda6867"
-api_key = "6372dda5-9674-4413-85ff-e9d0eb2f99a7"
+#github key
+# API_KEY = "6372dda5-9674-4413-85ff-e9d0eb2f99a7"
 #my key
 api_key = "924df669-0866-4524-b2ed-1e6c2eda6867"
-# uuid = "59460be1a8ef482e8dbc531490b37688"
 uuid = str(uuid.uuid4()).replace("-","")
 topic="queries"
 user_agent = "Mozilla/5.0"
 IN_DIR="../sound_level/yandex-cloud-sound-samples/queries/"
 
-#Step 1
-# ref_url = "http://asr.ru/oauth/authorize?response_type=code&client_id={client_id}&state={state}&redirect_uri={redirect_uri}"
-# ref_url = "http://asr.yandex.net/asr_xml?uuid={uuid}&key={key}&topic={topic}&lang=ru-RU"
-ref_url = "http://asr.yandex.net/asr_xml?uuid={uuid}&key={key}&topic={topic}"
-url=furl(ref_url).set(args={'uuid':uuid,'key':api_key,'topic':topic})
-print(url)
+# ref_url = "http://asr.yandex.net/asr_xml?uuid={uuid}&key={key}&topic={topic}"
+# url=furl(ref_url).set(args={'uuid':uuid,'key':API_KEY,'topic':topic})
+# print(url)
+
+url = "http://asr.yandex.net/asr_xml"
+params={'uuid':uuid,'key':api_key,'topic':topic}
 
 # headers={"Host":"asr.yandex.net", "Content-Type": "audio/x-wav","User-Agent":"Mozilla/5.0 (Windows; U; Windows NT 6.1; rv:2.2) Gecko/20110201"}
 headers={"Host":"asr.yandex.net", "Content-Type": "audio/x-wav","User-Agent":"Mozilla/5.0 (Windows; U; Windows NT 6.1; rv:2.2) Gecko/20110201"}
-
-data = open(IN_DIR+"1.wav", 'rb').read()
+with open(IN_DIR+"1.wav", 'rb') as f:
+    data = f.read()
 
 #debug proxy - manual setting, for external debug   proxy
 use_debug_proxy = False
@@ -67,38 +64,16 @@ else:
     proxies = {}
 #verify=True
 verify=False
-# r = requests.post(url,  data=data, verify=verify , proxies=proxies, headers=headers)
-r = requests.post( url=url,  data=data, headers=headers, proxies=proxies, verify=verify)
+
+r = requests.post( url=url, params=params, data=data, headers=headers, proxies=proxies, verify=verify)
 # r = requests.post( url=url,  files = {"1.wav":data}, headers=headers)
+print(r.status_code)
 print(r.content)
-for responce in r.history:
-    print(responce.status_code,responce.reason)
 #
-# soup = BeautifulSoup(r.content)
-# with open("resp.html", 'w+') as resp_f:
-#     resp_f.write(soup.prettify())
-# #print(soup.prettify())
-# if "Вход на сайт" in soup.find_all("title")[0].text :
-#     print ( soup.find_all("title")[0].text)
-# elif "Предоставление доступа" in soup.find_all("title")[0].text :
-#     print ( soup.find_all("title")[0].text)
+# for responce in r.history:
+#     print(responce.status_code,responce.reason)
 
 
 sys.exit(0)
-verify=False
-#verify=True
-#base_url="https://api.hh.ru/"
-#command_url= "me"
-scheme="https"
-host="m.hh.ru"
 
-
-command_url="oauth/authorize"
-resource="oauth/authorize"
-
-#access_token="I2FBHVENI01U2O2FNLORJPT5G4SF555BRVLB0V4KQMNLQN3TEP7H5P55479PG0BH"
-headers={'User-Agent':'hhdata)', 'Host':'api.hh.ru','Accept':'*/*','Authorization':'Bearer '+ access_token}
-
-r = requests.get(base_url+command_url, headers=headers, verify=verify )
-print(r.content)
 
