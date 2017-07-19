@@ -4,6 +4,10 @@ import requests
 import sys
 import uuid
 import os
+import datetime
+import time
+import shutil
+import json
 
 #default request url
 YANDEX_ASR_URL = "http://asr.yandex.net/asr_xml"
@@ -27,7 +31,8 @@ IN_DIR = "../out/extracted_wav_fragments/"
 OUT_DIR = "../out/extracted_wav_fragments/"
 VERIFY=False
 CHUNK_SIZE = 100000
-MAX_INPUT_SIZE = 200000
+MAX_INPUT_SIZE = 500000
+RECOGNITION_RESULT_ROOT_PATH = "../recognition/"
 
 #debug settings
 USE_DEBUG_PROXY = False
@@ -60,6 +65,8 @@ def asrRequest(data,resultFileName,
         f.write(r.content)
         f.flush()
 
+    return {"params":params,"status_code":r.status_code,"X-YaRequestId":r.headers["X-YaRequestId"]}
+
 def gen(file,chunk_size = CHUNK_SIZE):
     count = 1
     with  open(file, 'rb') as f:
@@ -72,21 +79,34 @@ def gen(file,chunk_size = CHUNK_SIZE):
             yield piece
 if __name__== "__main__":
     # fileForRecognition = "1.wav"
-    fileForRecognition = "test_15s_probki_glazki_hachalnik_yandex.wav"
+    # fileForRecognition = "test_15s_probki_glazki_hachalnik_yandex.wav"
+    # fileForRecognition ="numbers_1_20.wav"
+    fileForRecognition ="all_text_16_part_1.wav"
+    comment = "generated voice, 0m 0s - 1m 08s text from cam9-1498221746-931 0h 9m 47.000s(587s) - 0h 12m 44.400s(764.4s) ~ 0h 2m 57.400s(177.400s)_subst.wav "
     pathToFileForRecognition = IN_DIR+fileForRecognition
-    recognizedFile = OUT_DIR+os.path.splitext(fileForRecognition)[0]+"_recognized"+".xml"
+    ts = time.time()
+    st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S').replace(":","_")
+    recognitionResultPath = RECOGNITION_RESULT_ROOT_PATH+os.path.splitext(fileForRecognition)[0]+"_"+st
+    os.mkdir(recognitionResultPath)
+    # recognizedFile = OUT_DIR+os.path.splitext(fileForRecognition)[0]+"_recognized"+".xml"
+    recognizedFile = recognitionResultPath+"/"+os.path.splitext(fileForRecognition)[0]+"_recognized"+".xml"
     size = os.path.getsize(pathToFileForRecognition)
-    if size <= MAX_INPUT_SIZE+1000000:
+    src = pathToFileForRecognition
+    dst = recognitionResultPath+"/"+fileForRecognition
+    shutil.copyfile(src,dst)
+    if size <= MAX_INPUT_SIZE:
         with open(pathToFileForRecognition, 'rb') as f:
             data = f.read()
-            recognizedFile = OUT_DIR+os.path.splitext(fileForRecognition)[0]+"_queries_recognized"+".xml"
-            asrRequest(data,recognizedFile)
-            recognizedFile = OUT_DIR+os.path.splitext(fileForRecognition)[0]+"_queries_freeform"+".xml"
-            asrRequest(data,recognizedFile,topic="freeform")
+            # recognizedFile = OUT_DIR+os.path.splitext(fileForRecognition)[0]+"_queries_recognized"+".xml"
+            # asrRequest(data,recognizedFile)
+            # recognizedFile = OUT_DIR+os.path.splitext(fileForRecognition)[0]+".xml"
+            result = asrRequest(data,recognizedFile,topic="freeform")
     else:
-        asrRequest(gen(pathToFileForRecognition),recognizedFile)
+        result = asrRequest(gen(pathToFileForRecognition),recognizedFile,topic="freeform")
 
-
+    result["coment"] = comment
+    with open(recognitionResultPath+"/"+'parameters.json', 'w') as fp:
+        json.dump(result, fp)
 
 sys.exit(0)
 
