@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<recognitionResults success="1">
+	<variant confidence="1">помощник начальника продовольственной службы обязан</variant>
+</recognitionResults>

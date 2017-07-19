@@ -31,9 +31,11 @@ copy proxy SSL certificate file(PEM) to  /etc/ssl/certs/ca-certificates.crt/
 sudo update-ca-certificates
 '''
 #github key
-# API_KEY = "6372dda5-9674-4413-85ff-e9d0eb2f99a7"
+# api_key = "6372dda5-9674-4413-85ff-e9d0eb2f99a7"
+#for_asr key
+api_key = "4f49da7e-7070-4fe6-beaf-52bdf1650e98"
 #my key
-api_key = "924df669-0866-4524-b2ed-1e6c2eda6867"
+# api_key = "924df669-0866-4524-b2ed-1e6c2eda6867"
 uuid = str(uuid.uuid4()).replace("-","")
 topic="queries"
 user_agent = "Mozilla/5.0"
