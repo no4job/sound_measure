@@ -81,8 +81,10 @@ if __name__== "__main__":
     # fileForRecognition = "1.wav"
     # fileForRecognition = "test_15s_probki_glazki_hachalnik_yandex.wav"
     # fileForRecognition ="numbers_1_20.wav"
-    fileForRecognition ="all_text_16_part_1.wav"
-    comment = "generated voice, 0m 0s - 1m 08s text from cam9-1498221746-931 0h 9m 47.000s(587s) - 0h 12m 44.400s(764.4s) ~ 0h 2m 57.400s(177.400s)_subst.wav "
+    # fileForRecognition ="all_text_16_part_1.wav"
+    # comment = "generated voice, 0m 0s - 1m 08s text from cam9-1498221746-931 0h 9m 47.000s(587s) - 0h 12m 44.400s(764.4s) ~ 0h 2m 57.400s(177.400s)_subst.wav "
+    fileForRecognition ="выводы_gen16_12s_norm_-9dB.wav"
+    comment = "generated voice,  norm to -9dB , 12s from cam9-1498221746-931 0h 9m 47.000s(587s) - 0h 12m 44.400s(764.4s) ~ 0h 2m 57.400s(177.400s)_subst.wav "
     pathToFileForRecognition = IN_DIR+fileForRecognition
     ts = time.time()
     st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S').replace(":","_")
