@@ -11,14 +11,16 @@ import json
 
 #default request url
 YANDEX_ASR_URL = "http://asr.yandex.net/asr_xml"
+# YANDEX_ASR_URL = "http://10.85.132.50:3457/asr_xml"
 #default  parameters
 #github key
 # API_KEY = "6372dda5-9674-4413-85ff-e9d0eb2f99a7"
 #my key
 API_KEY = "924df669-0866-4524-b2ed-1e6c2eda6867"
+# API_KEY = "internal"
 UUID_KEY = str(uuid.uuid4()).replace("-","")
 TOPIC="queries"
-# TOPIC="freeform"
+#TOPIC="freeform"
 #default  headers
 # USER_AGENT = "Mozilla/5.0 (Windows; U; Windows NT 6.1; rv:2.2) Gecko/20110201"
 HOST = "asr.yandex.net"
@@ -83,8 +85,8 @@ if __name__== "__main__":
     # fileForRecognition ="numbers_1_20.wav"
     # fileForRecognition ="all_text_16_part_1.wav"
     # comment = "generated voice, 0m 0s - 1m 08s text from cam9-1498221746-931 0h 9m 47.000s(587s) - 0h 12m 44.400s(764.4s) ~ 0h 2m 57.400s(177.400s)_subst.wav "
-    fileForRecognition ="выводы_gen16_12s_norm_-9dB.wav"
-    comment = "generated voice,  norm to -9dB , 12s from cam9-1498221746-931 0h 9m 47.000s(587s) - 0h 12m 44.400s(764.4s) ~ 0h 2m 57.400s(177.400s)_subst.wav "
+    fileForRecognition ="cam175-2s_cut.wav"
+    comment = "real ,  2s from cam175-1498130056-1049 0h 06m 49.460s(409.46s) - 0h 9m 49.000s(589s) ~ 0h 2m 59.540s(179.540s)_cut.wav"
     pathToFileForRecognition = IN_DIR+fileForRecognition
     ts = time.time()
     st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S').replace(":","_")
