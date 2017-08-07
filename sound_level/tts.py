@@ -71,7 +71,7 @@ if __name__== "__main__":
     tts_by_list = False
     tts_file = True
     FILE_DIR =  "../out/extracted_wav_fragments/"
-    FILE_NAME = "all_text.txt"
+    FILE_NAME = "cam92-1488868588-2539_10_06_966-13_02_656_cut.txt"
     LIST_DIR = "../replacement/"
     LIST_NAME = "replacement_list.txt"
     # TEXT = "задержанной"
@@ -85,7 +85,8 @@ if __name__== "__main__":
     #speechSoundFileName = "numbers_1_20.wav"
     #speechSoundFileName = "выводы.wav"
     # speechSoundFileName = "тест.wav"
-    speechSoundFileName = "all_text.wav"
+    # speechSoundFileName = "all_text.wav"
+    speechSoundFileName = "cam92-1488868588-2539_10_06_966-13_02_656_cut_gen.wav"
 
     speed = 1
 
