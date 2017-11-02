@@ -85,8 +85,8 @@ if __name__== "__main__":
     # fileForRecognition ="numbers_1_20.wav"
     # fileForRecognition ="all_text_16_part_1.wav"
     # comment = "generated voice, 0m 0s - 1m 08s text from cam9-1498221746-931 0h 9m 47.000s(587s) - 0h 12m 44.400s(764.4s) ~ 0h 2m 57.400s(177.400s)_subst.wav "
-    fileForRecognition ="cam175-2s_cut.wav"
-    comment = "real ,  2s from cam175-1498130056-1049 0h 06m 49.460s(409.46s) - 0h 9m 49.000s(589s) ~ 0h 2m 59.540s(179.540s)_cut.wav"
+    fileForRecognition ="выводы_my_voice_12s_norm_-14dB.wav"
+    comment = "my voice,  norm to -14dB , 12s from cam9-1498221746-931 0h 9m 47.000s(587s) - 0h 12m 44.400s(764.4s) ~ 0h 2m 57.400s(177.400s)_subst.wav "
     pathToFileForRecognition = IN_DIR+fileForRecognition
     ts = time.time()
     st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S').replace(":","_")
